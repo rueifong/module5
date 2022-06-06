@@ -74,13 +74,13 @@ const App = () => {
                 <Login setToken={setToken} setPermission={setPermission} />
               )}
             /> */}
-            <Route path="/stock-font-end/" exact component={Main} />
-            <GuardedRoute
+            {/* <Route path="/stock-font-end/" exact component={Main} /> */}
+            <Route
               path="/stock-font-end/echart-example"
               component={EchartExample}
             />
             {['Q1-chart', 'replay-chart'].map((data) => (
-              <GuardedRoute
+              <Route
                 key={Math.random()}
                 path={`/stock-font-end/${data}`}
                 component={AUTH_MAPPING_DATA[data]}

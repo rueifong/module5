@@ -470,7 +470,7 @@ const ReplayChart = () => {
           </div>
           <div className="flex items-center">
             <span className="w-1/3">Cash Flow</span>
-            <Input disabled="true" type="number" className="w-2/3" value={cashFlow} />
+            <Input disabled={true} type="number" className="w-2/3" value={cashFlow} />
           </div>
           <Button disabled={!isStockPanel} className="w-full mt-3" type="primary" onClick={() => PlaceOrderPushed()}>Place Order</Button>
         </div>
