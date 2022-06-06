@@ -30,13 +30,21 @@ const BarLineChart = ({
     xAxis: [
       {
         type: "category",
-        // boundaryGap: true,
+        boundaryGap: true,
         data: data.xAxis,
         axisLabel: {
+          interval: 100,
+          align: 'center',
           formatter: (value, index) => {
-            return value;
+            return Number(value).toFixed(1);
           },
         },
+        axisTick: {
+          show: true,
+          alignWithLabel: true,
+          interval: 100,
+          inside: true,
+        }
       },
     ],
     yAxis: [
@@ -63,6 +71,30 @@ const BarLineChart = ({
         type: "line",
         // step: "end",
         data: data.yAxis,
+        endLabel: {
+          show: true,
+          borderColor: 'red',
+          borderWidth: '3px',
+          width: '3px',
+          height: '3px',
+          backgroundColor: 'red',
+        },
+
+        markPoint: {
+          animation: false,
+          symbol: 'circle',
+          data: [
+            { 
+              xAxis: (data.yAxis.length > 0) ? data.yAxis.length-1 : 0,
+              yAxis: (data.yAxis.length > 0) ? data.yAxis[data.yAxis.length-1] : 0,
+              symbolSize: 6,
+              itemStyle: {
+                opacity: 1,
+                color: '#ff4d4f',
+              },
+            }
+          ]
+        },
         // itemStyle: {
         //   color: "black",
         // },
