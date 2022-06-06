@@ -34,7 +34,6 @@ const ReplayChart = () => {
   const nt = 1001;
   let t_now = [];
   let S = [];
-  let xAxis = [];
   // let timer;
 
   // Reset 按鈕按下
@@ -114,6 +113,14 @@ const ReplayChart = () => {
     // startTimer(count, []);
     // let intervalId = setInterval(startTimer,1000)
   // }, [isSet, isStart])
+
+  const InterestRateValueChanged = (e) => {
+    setInterestRate(e.target.value);
+  }
+
+  const VolatilityValueChanged = (e) => {
+    setVolatility(e.target.value);
+  }
 
   // Long 及 Short 選擇改變 
   const LongShortSelectionChanged = (e) => {
@@ -315,13 +322,28 @@ const ReplayChart = () => {
     setCashFlow(-longShort * price * vol);
   }
 
+  // 更新 Portfolio Table
+  const updatePortfolioTable = () => {
+    setCash(cash[it]);
+    Profit = profit[it];
+    Time = t[it];
+    if (nPortfolio > 0) {
+      for (let i = 1; i <= nPortfolio; i++) {
+        portfolioTable[i, 8] = marketPrice[i, it];
+        portfolioTable[i, 9] = portfolioProfit [i, it];
+        if (expireIt[i] < it) {
+          portfolioTable[i, 10] = 'X';
+        }
+      }
+    }
+  }
+
   // 產生股價
   const generateGBM = () => {
     let r = interestRate / 100;
     let v = volatility / 100;
     for (let j = 0; j < nt; j++) {
       t_now[j] = (j) / (nt - 1);
-      xAxis[j] = j;
     }
     setT(t_now);
 
@@ -336,14 +358,8 @@ const ReplayChart = () => {
       let Z =  Math.sqrt(-2 * Math.log(U1)) * Math.cos(2 * U2 * Math.PI);
       let R = (r - 0.5 * Math.pow(v, 2)) * dt + v * Math.sqrt(dt) * Z;
       S[j] = S[j - 1] * Math.exp(R);
-
-      // dataR[j] = R;
-      total += R;
     }
 
-
-    console.log('xAxis', xAxis);
-    console.log('total', total / 1000);
     console.log('S', S);
     console.log('t', t);
 
@@ -404,11 +420,11 @@ const ReplayChart = () => {
           <h6>Stock Properties</h6>
           <div className="flex items-center mb-2">
             <span className="w-2/3">Interest rate (%)</span>
-            <Input disabled={isSet} type="number" className="w-30" value="5.00" />
+            <Input disabled={isSet} type="number" className="w-30" value={interestRate} onChange={InterestRateValueChanged} />
           </div>
           <div className="flex items-center mb-2">
             <span className="w-2/3">Volatility (%)</span>
-            <Input disabled={isSet} type="number" className="w-30" value="30" />
+            <Input disabled={isSet} type="number" className="w-30" value={volatility} onChange={VolatilityValueChanged} />
           </div>
           <Button disabled={isSet} onClick={() => generateGBM()} className="w-full">Set</Button>
         </div>
