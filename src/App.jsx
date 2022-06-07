@@ -79,10 +79,10 @@ const App = () => {
               path="/echart-example"
               component={EchartExample}
             /> */}
-            {['Q1-chart', 'replay-chart'].map((data) => (
+            {['replay-chart'].map((data) => (
               <Route
                 key={Math.random()}
-                path={`/${data}`}
+                path={`/`}
                 component={AUTH_MAPPING_DATA[data]}
               />
             ))}
