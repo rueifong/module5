@@ -25,7 +25,7 @@ const RouterLink = ({ setToken, permission }) => {
               })
               .finally((res) => {
                 setToken(null);
-                history.replace("/stock-font-end/login/");
+                history.replace("/login/");
               });
           }}
         >
@@ -33,16 +33,16 @@ const RouterLink = ({ setToken, permission }) => {
         </Button>
       </li>
       <li className=" py-5 text-xl border-b border-black">
-        <NavLink to="/stock-font-end/" exact>
+        <NavLink to="/" exact>
           首頁
         </NavLink>
       </li>
       <li className="py-5 text-xl border-b border-black">
-        <NavLink to="/stock-font-end/echart-example">範例</NavLink>
+        <NavLink to="/echart-example">範例</NavLink>
       </li>
       {permission.map((data) => (
         <li className="py-5 text-xl border-b border-black" key={Math.random()}>
-          <NavLink to={`/stock-font-end/${data}`}>
+          <NavLink to={`/${data}`}>
             {LINK_MAPPING_DATA[data]}
           </NavLink>
         </li>
