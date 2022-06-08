@@ -3,37 +3,51 @@ import { defaultAxios, api } from "../../environment/api";
 import DisplayChart from "../../component/chart/display-chart";
 import Simulator from "../simulator";
 import BarLineChart from "../../pages/echart-example/bar-line";
-import { Input, Button, Radio, Select } from 'antd';
+import { Input, Button, Radio, Select, Table } from 'antd';
 const { Option } = Select;
 
 const ReplayChart = () => {
-  const [interestRate, setInterestRate] = useState(5);
-  const [volatility, setVolatility] = useState(30);
-  const [data, setData] = useState({
+  let [timer, setTimer] = useState(null);
+  const [StockPriceChart, setStockPriceChart] = useState({
     xAxis: [],
     yAxis: [],
   });
+  const [ProfitChart, setProfitChart] = useState({
+    xAxis: [],
+    yAxis: [],
+  });
+  const [tableData, setTableData] = useState([]);
   const [isSet, setIsSet] = useState(false);
   const [isStart, setIsStart] = useState(false);
   const [isStockPanel, setIsStockPanel] = useState(false);
   const [currentStatus, setCurrentStatus] = useState(-1);
   const [X, setX] = useState([]);
   const [Y, setY] = useState([]);
+  const [PY, setPY] = useState([]);
   const [t, setT] = useState([]);
+  const [S, setS] = useState([]);
+  const [interestRate, setInterestRate] = useState(5);
+  const [volatility, setVolatility] = useState(30);
   const [buttonText, setButtonText] = useState('START');
   const [type, setType] = useState(1);
   const [it, setIt] = useState(0);
-  let [timer, setTimer] = useState(null);
   const [longShort, setLongShort] = useState(1);
   const [volume, setVolume] = useState(1);
   const [strike, setStrike] = useState(100);
   const [maturity, setMaturity] = useState(1);
   const [cashFlow, setCashFlow] = useState(0);
-  const [Cash, setCash] = useState([]);
-  
-  const nt = 1001;
+  const [cash, setCash] = useState([]);
+  const [nPortfolio, setNPortfolio] = useState(0);
+  const [expireIt, setExpireIt] = useState([]);
+  const [marketPrice, setMarketPrice] = useState([]);
+  const [portfolioProfit, setPortfolioProfit] = useState([]);
+  const [profit, setProfit] = useState([]);
+  const [cost, setCost] = useState([]);
+  const [nt, setnt] = useState(1001);
+
+  // const nt = 1001;
   let t_now = [];
-  let S = [];
+  // let S = [];
   // let timer;
 
   // Reset 按鈕按下
@@ -43,18 +57,19 @@ const ReplayChart = () => {
     setIsStart(false);
     setCurrentStatus(-1);
     setButtonText('START');
-    setData({});
+    setStockPriceChart({});
   }
 
   // Start 按鈕按下
   const StartButtonPushed = () => {
     let newY = [];
+    let newPY = [];
     let c = it;
     switch (currentStatus) {
       // START
       case 0:
         setIsStockPanel(false);
-        startTimer(c, newY);
+        startTimer(c, newY, newPY);
         // runPlot();
         break;
 
@@ -72,14 +87,16 @@ const ReplayChart = () => {
       // CONTINUE
       case 2:
         setIsStockPanel(false);
-        newY = data.yAxis;
-        startTimer(c, newY);
+        newY = StockPriceChart.yAxis;
+        newPY = ProfitChart.yAxis;
+        console.log('newY', profit.length, PY.length);
+        startTimer(c, newY, newPY);
         break;
     }
   }
 
   // Start Timer
-  const startTimer = (c, newY) => {
+  const startTimer = (c, newY, newPY) => {
     setTimer(setInterval(() => {
       if (c >= X.length) {
         setCurrentStatus(3);
@@ -88,10 +105,15 @@ const ReplayChart = () => {
         alert('done');
       } else if (isStart) {
         newY.push(Y[c]);
+        newPY.push(PY[c]);
         setIt(c);
-        setData({
+        setStockPriceChart({
           xAxis: X,
           yAxis: newY,
+        });
+        setProfitChart({
+          xAxis: X,
+          yAxis: newPY,
         });
         c++;
         console.log(c, it, X.length);
@@ -154,82 +176,108 @@ const ReplayChart = () => {
 
   // Place Order 按鈕按下
   const PlaceOrderPushed =  () => {
-    let nPortfolio = nPortfolio + 1
+    let n = nPortfolio;
     // 宣告 tableData[] 表示第 nPortfolio 筆下單資訊表 (共 10 個欄位)
-    let i = nPortfolio;
-    let tableData = [];
-    tableData[1] = i;
-    tableData[2] = X[it];
-    tableData[3] = type;
+    let i = n + 1;
+    let table = [];
+    table[1] = i;
+    setNPortfolio(i);
+    table[2] = t[it];
+    table[3] = type;
 
-    let expireIt = [];
+    let expireIt_now = [];
     let expireInd;
-    let T; 
+    let T;
+    let K;
+    let CashFlow;
+    let cash_now = [];
+    let portfolio = [];
+    let market = [];
+    let profit_now = [];
+    let tau = [];
+    let ind = [];
+    let v;
+    let price;
     if (type == 1) {
-      expireIt[i] = nt;
+      expireIt_now[i] = nt;
     } else {
       T = maturity;
-      tableData[4] = T;
+      table[4] = T;
       expireInd = Math.round(1000 * T + 1);
-      expireIt[i]= expireInd;
-      let K = strike;
-      tableData[5] = K;
+      expireIt_now[i]= expireInd;
+      K = strike;
+      table[5] = K;
     }
+    setExpireIt(expireIt_now);
     let vol = volume
-    tableData[6] = vol * longShort;
-    let cost = [];
+    table[6] = vol * longShort;
     cost[i] = -cashFlow;
-    tableData[7] = -cashFlow;
-    tableData[8] = -cashFlow;
-    tableData[9] = 0;
+    table[7] = -cashFlow;
+    table[8] = -cashFlow;
+    table[9] = 0;
     // 將 tableData 資料填入 portfolioTable 第 i 列
+    setTableData(t => [...t, {
+      id: table[1],
+      time: table[2],
+      type: table[3],
+      t: table[4],
+      k: table[5],
+      vol: table[6],
+      cost: table[7],
+      marketValue: table[8],
+      profit: table[9],
+      expire: table[10],
+    }]);
+    console.log(tableData);
     let r = interestRate / 100;
     let dt = 1 / (nt - 1);
     let tt = [];
     for (let j = 0; j <= (nt - it); j++) {
       tt[j + 1] = j * dt;
     }
-    let cash = [];
     for (let j = it; j <= nt; j++) {
-      cash[j] = cash[j] + cashFlow * Math.exp(r * tt[j - it + 1]);
+      cash_now[j] = 0;
+      cash_now[j] = cash_now[j] + cashFlow * Math.exp(r * tt[j - it + 1]);
     }
-    let portfolioProfit = [];
+    portfolio[i] = [];
     if (type == 1) {
-      setCashFlow(longShort * Y[nt] * vol);
-      cash[nt] = cash[nt] + cashFlow;
-      portfolioProfit[i][nt] = cashFlow - cost[i]
+      CashFlow = (longShort * S[nt] * vol);
+      cash_now[nt] = 0;
+      cash_now[nt] = cash_now[nt] + cashFlow;
+      portfolio[i][nt] = cashFlow - cost[i]
     } else {
       for (let j = 0; j <= (nt - expireInd); j++) {
         tt[j + 1] = j * dt;
       }
       switch (type) {
         case 2:
-          setCashFlow(longShort * (Y[expireInd] - K) * vol);
+          CashFlow = (longShort * (S[expireInd] - K) * vol);
           break;
         case 3:
-          setCashFlow(longShort * Math.max(Y[expireInd] - K, 0) * vol);
+          CashFlow = (longShort * Math.max(S[expireInd] - K, 0) * vol);
           break;
         case 4:
-          setCashFlow(longShort * Math.max(K - Y[expireInd], 0) * vol);
+          CashFlow = (longShort * Math.max(K - S[expireInd], 0) * vol);
           break;
         case 5:
-          setCashFlow(longShort * (Y[expireInd] > K) * vol);
+          CashFlow = (longShort * (S[expireInd] > K) * vol);
           break;
         case 6:
-          setCashFlow(longShort * (K > Y[expireInd]) * vol);
+          CashFlow = (longShort * (K > S[expireInd]) * vol);
           break;
       }
       for (let j = expireInd; j <= nt; j++) {
-        cash[j] = cash[j] + cashFlow * Math.exp(r * tt[j - expireInd + 1]);
-        portfolioProfit[i][j] = cashFlow - cost[i];
+        cash_now[j] = 0;
+        cash_now[j] = cash_now[j] + cashFlow * Math.exp(r * tt[j - expireInd + 1]);        
+        portfolio[i][j] = cashFlow - cost[i];
       }
     }
 
-    let marketPrice = [];
+    market[i] = [];
     if (type == 1) {
       for (let j = it; j <= (nt - 1); j++) {
-        marketPrice[i][j] = longShort * Y[j] * vol;
-        portfolioProfit[i][j] = marketPrice[i][j] - cost[i];
+        market[i][j] = longShort * S[j] * vol;
+        portfolio[i][j] = market[i][j] - cost[i];
       }
     } else {
       for (let j = 0; j <= (expireInd - 1 - it); j++) {
@@ -243,41 +291,49 @@ const ReplayChart = () => {
       switch (type) {
         case 2:
           for (let j = 1; j <= (expireInd - it); j++) {
-            price = Y[ind[j]] - K * Math.exp(-r * tau[j]);
+            price = S[ind[j]] - K * Math.exp(-r * tau[j]);
           }
           break;
         case 3:
           for (let j = 1; j <= (expireInd - it); j++) {
-            price = vanillaPrice(Y[ind[j]], K, r, v, tau[j], 1);
+            price = vanillaPrice(S[ind[j]], K, r, v, tau[j], 1);
           }
           break;
         case 4:
           for (let j = 1; j <= (expireInd - it); j++) {
-            price = vanillaPrice(Y[ind[j]], K, r, v, tau[j], -1);
+            price = vanillaPrice(S[ind[j]], K, r, v, tau[j], -1);
           }
           break;
         case 5:
           for (let j = 1; j <= (expireInd - it); j++) {
-            price = binaryPrice(Y[ind[j]], K, r, v, tau[j], 1);
+            price = binaryPrice(S[ind[j]], K, r, v, tau[j], 1);
           }
           break;
         case 6:
           for (let j = 1; j <= (expireInd - it); j++) {
-            price = binaryPrice(Y[ind[j]], K, r, v, tau[j], -1);
+            price = binaryPrice(S[ind[j]], K, r, v, tau[j], -1);
           }
           break;
       }
       for (let j = it; j <= (expireInd - 1); j++) {
-        marketPrice[i][j] = longShort * price[j - it + 1] * vol;
-        portfolioProfit[i][j] = marketPrice[i][j] - cost[i];
+        market[i][j] = longShort * price[j - it + 1] * vol;
+        portfolio[i][j] = market[i][j] - cost[i];
       }
     }
+    setMarketPrice(market);
     for (let j = 1; j <= nt; j++) {
+      profit_now[j] = 0;
       for (let k = 1; k <= nPortfolio; k++) {
-        profit[j] = profit[j] + marketPrice[k, j] + cash[j];
+        profit_now[j] = profit_now[j] + marketPrice[k][j] + cash_now[j];
       }
     }
-    setCash(cash[it]);
+    setPortfolioProfit(portfolio);
+    setProfit(profit_now);
+    console.log('newY2', profit_now, cash_now);
+    setPY(profit_now.slice(1));
+    setCashFlow(CashFlow);
+    setCash(cash_now);
+    // setCash(cash_now[it]);
   }
 
   // 下單面板初始化設定
@@ -288,14 +344,14 @@ const ReplayChart = () => {
     setVolume(1);
     setStrike(100);
     setMaturity(1);
-    setCashFlow(-Y[it]);
+    setCashFlow(-S[it]);
     updateOrderPanel(type);
   }
 
   // 下單面板更新
   const updateOrderPanel = (typeNow) => {
     // LongShortFlag = (Long: 1; Short: -1)
-    let S0 = Y[it];
+    let S0 = S[it];
     let K = strike;
     let r = interestRate / 100;
     let v = volatility / 100;
@@ -324,7 +380,7 @@ const ReplayChart = () => {
 
   // 更新 Portfolio Table
   const updatePortfolioTable = () => {
-    setCash(cash[it]);
+    // setCash(cash[it]);
     Profit = profit[it];
     Time = t[it];
     if (nPortfolio > 0) {
@@ -342,29 +398,31 @@ const ReplayChart = () => {
   const generateGBM = () => {
     let r = interestRate / 100;
     let v = volatility / 100;
-    for (let j = 0; j < nt; j++) {
-      t_now[j] = (j) / (nt - 1);
+    let py = [];
+    for (let j = 1; j <= nt; j++) {
+      t_now[j] = (j - 1) / (nt - 1);
+      py[j] = 0;
     }
-    setT(t_now);
 
     let dt = 1 / (nt - 1);
-    S[0] = 100
-
-    let total = 0;
-    let dataR = [];
-    for (let j = 1; j < nt; j++) {
+    let s = [];
+    s[0] = 0;
+    s[1] = 100
+    for (let j = 2; j <= nt; j++) {
       let U1 = Math.random();
       let U2 = Math.random();
       let Z =  Math.sqrt(-2 * Math.log(U1)) * Math.cos(2 * U2 * Math.PI);
       let R = (r - 0.5 * Math.pow(v, 2)) * dt + v * Math.sqrt(dt) * Z;
-      S[j] = S[j - 1] * Math.exp(R);
+      s[j] = s[j - 1] * Math.exp(R);
     }
-
-    console.log('S', S);
+    console.log('S', s);
     console.log('t', t);
 
-    setX(t_now);
-    setY(S);
+    setX(t_now.slice(1));
+    setY(s.slice(1));
+    setPY(py.slice(1));
+    setT(t_now);
+    setS(s);
     setIsSet(true);
     setIsStart(true);
     setCurrentStatus(0);
@@ -415,7 +473,7 @@ const ReplayChart = () => {
     <div className="flex">
 
       {/* 設定 */}
-      <div className="w-1/4">
+      <div className="w-1/5">
         <div className="border p-5">
           <h6>Stock Properties</h6>
           <div className="flex items-center mb-2">
@@ -461,10 +519,10 @@ const ReplayChart = () => {
           <div className="flex items-center" style={{ opacity: (type == 1) ? 0 : 1 }}>
             <span className="w-1/3">Maturity</span>
             <Select disabled={type == 1 || !isStockPanel} className="w-2/3" defaultValue="1" onChange={MaturityValueChanged}>
-              <Option disabled={X[it] >= 0.2} value="0.2">0.2</Option>
-              <Option disabled={X[it] >= 0.4} value="0.4">0.4</Option>
-              <Option disabled={X[it] >= 0.6} value="0.6">0.6</Option>
-              <Option disabled={X[it] >= 0.8} value="0.8">0.8</Option>
+              <Option disabled={t[it] >= 0.2} value="0.2">0.2</Option>
+              <Option disabled={t[it] >= 0.4} value="0.4">0.4</Option>
+              <Option disabled={t[it] >= 0.6} value="0.6">0.6</Option>
+              <Option disabled={t[it] >= 0.8} value="0.8">0.8</Option>
               <Option value="1">1</Option>
             </Select>
           </div>
@@ -477,10 +535,104 @@ const ReplayChart = () => {
       </div>
 
       {/* 圖表 */}
-      <div className="w-3/4">
+      <div className="w-4/5">
         <BarLineChart
-          data={data}
+          data={StockPriceChart}
         />
+        <BarLineChart
+          data={ProfitChart}
+        />
+
+        <div className="flex">
+          <div className="w-3/4">
+            <Table
+              className="border"
+              rowKey="id"
+              size="small"
+              columns={[
+                {
+                  title: "ID",
+                  dataIndex: "id",
+                  key: Math.random(),
+                  width: 50,
+                },
+                {
+                  title: "Time",
+                  dataIndex: "time",
+                  key: Math.random(),
+                  width: 50,
+                },
+                {
+                  title: "Type",
+                  dataIndex: "type",
+                  key: Math.random(),
+                  width: 50,
+                },
+                {
+                  title: "T",
+                  dataIndex: "t",
+                  key: Math.random(),
+                  width: 50,
+                },
+                {
+                  title: "K",
+                  dataIndex: "k",
+                  key: Math.random(),
+                  width: 50,
+                },              {
+                  title: "Vol.",
+                  dataIndex: "vol",
+                  key: Math.random(),
+                  width: 50,
+                },
+                {
+                  title: "Cost",
+                  dataIndex: "cost",
+                  key: Math.random(),
+                  width: 50,
+                },
+                {
+                  title: "MarketValue",
+                  dataIndex: "marketValue",
+                  key: Math.random(),
+                  width: 80,
+                },
+                {
+                  title: "Profit",
+                  dataIndex: "profit",
+                  key: Math.random(),
+                  width: 50,
+                },
+                {
+                  title: "Expire",
+                  dataIndex: "expire",
+                  key: Math.random(),
+                  width: 50,
+                },
+              ]}
+              pagination={false}
+              dataSource={
+                tableData
+                // orders.length && [{ ...orders[currentIndex], key: Math.random() }]
+              }
+              sticky
+            />
+          </div>
+          <div className="w-1/4 p-5 border py-8">
+            <div className="flex items-center mb-2">
+              <span className="w-1/3">Cash</span>
+              <Input disabled={true} type="number" className="w-2/3" value={cashFlow} />
+            </div>
+            <div className="flex items-center mb-2">
+              <span className="w-1/3">Profit</span>
+              <Input disabled={true} type="number" className="w-2/3" value={cashFlow} />
+            </div>
+            <div className="flex items-center">
+              <span className="w-1/3">Time</span>
+              <Input disabled={true} type="number" className="w-2/3" value={cashFlow} />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
