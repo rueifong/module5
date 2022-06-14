@@ -3,11 +3,10 @@ import ReactECharts from "echarts-for-react";
 import dayjs from "dayjs";
 
 const BarLineChart = ({
-  data = { xAxis: [], yAxis: [] },
+  data = { title: '', xAxis: [], yAxis: [], max: 100, min: 0 },
 }) => {
   console.log('data', data);
-  const [dataZoom, setDataZoom] = useState(10);
-  const [dateFormat, setDateFormat] = useState(4);
+  const [dataZoom, setDataZoom] = useState(1001);
   const options = {
     tooltip: {
       trigger: "axis",
@@ -50,26 +49,31 @@ const BarLineChart = ({
     yAxis: [
       {
         type: "value",
+        // name: (data.title) ? data.title : 'title',
+        // nameLocation: "middle",
+        // nameGap: 10,
+        
         // scale: true,
         // name: "成交價",
+        // max: Math.max(data.max, Math.max(...data.yAxis)) + 10,
+        // min: Math.min(data.min, Math.min(...data.yAxis)) - 10,
       },
     ],
-    // dataZoom: [
-    //   {
-    //     show: true,
-    //     realtime: true,
-    //     startValue: dataZoom ? data.xAxis.length - dataZoom : 0,
-    //     endValue: data.xAxis.length - 1,
-    //     onChange: (val) => {
-    //       console.log(val);
-    //     },
-    //   },
-    // ],
+    dataZoom: [
+      {
+        show: true,
+        realtime: true,
+        startValue: dataZoom ? data.xAxis.length - dataZoom : 0,
+        endValue: data.xAxis.length - 1,
+        onChange: (val) => {
+          console.log(val);
+        },
+      },
+    ],
     series: [
       {
         name: "成交價",
         type: "line",
-        // step: "end",
         data: data.yAxis,
         endLabel: {
           show: true,
@@ -79,7 +83,6 @@ const BarLineChart = ({
           height: '3px',
           backgroundColor: 'red',
         },
-
         markPoint: {
           animation: false,
           symbol: 'circle',

@@ -66,7 +66,7 @@ const App = () => {
     <BrowserRouter>
       <div className="flex ">
         {/* {<RouterLink setToken={setToken} permission={['Q1-chart', 'replay-chart']} />} */}
-        <div className="flex-1 my-10 ">
+        <div className="flex-1 mb-10">
           <Switch>
             {/* <Route
               path="/login/"
